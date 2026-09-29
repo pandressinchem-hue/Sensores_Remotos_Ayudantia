@@ -26,14 +26,3 @@ Cada Issue queda registrado con fecha, autor y contenido, sirviendo como evidenc
 ## Prácticas
 
 Las prácticas de Google Earth Engine y Google Colab se exportan como archivos `.html` autocontenidos y se suben a la carpeta `practicas/`. Si se activa GitHub Pages sobre la rama `main` (carpeta raíz o `/docs`), cada práctica queda accesible como una página web pública.
-
-## Sesión 1 - Lectura metodológica de casos de estudio
-
-Papers analizados:
-
-| # | Tema | Referencia |
-|---|------|-----------|
-| P1 | Radar y monitoreo de bosques en Guyana | Persaud & Milián (2021) |
-| P2 | Cobertura de suelo con Sentinel-2 y dron | Ramírez et al. (2020) |
-| P3 | Evapotranspiración y recursos hídricos | Méndez-Jocik et al. (2021) |
-| P4 | Islas de calor urbanas en Cuenca | Alvarez et al. (2026) |
