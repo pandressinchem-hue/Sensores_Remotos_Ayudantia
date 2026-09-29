@@ -1,0 +1,67 @@
+name: "Control de lectura"
+description: Formulario individual para documentar la lectura y comprensión del paper asignado en la ayudantía de Sensores Remotos.
+title: "[Control de lectura] "
+labels: ["control-lectura"]
+body:
+  - type: input
+    id: estudiante
+    attributes:
+      label: Nombre del estudiante
+      placeholder: Nombres y apellidos
+    validations:
+      required: true
+  - type: input
+    id: fecha
+    attributes:
+      label: Fecha de la sesión
+      placeholder: DD/MM/AAAA
+    validations:
+      required: true
+  - type: dropdown
+    id: paper
+    attributes:
+      label: Paper analizado
+      options:
+        - "P1 - Radar y monitoreo de bosques en Guyana (Persaud & Milián, 2021)"
+        - "P2 - Cobertura de suelo con Sentinel-2 y dron (Ramírez et al., 2020)"
+        - "P3 - Evapotranspiración y recursos hídricos (Méndez-Jocik et al., 2021)"
+        - "P4 - Islas de calor urbanas en Cuenca (Alvarez et al., 2026)"
+    validations:
+      required: true
+  - type: textarea
+    id: objetivo
+    attributes:
+      label: "¿Cuál es el objetivo principal del estudio?"
+    validations:
+      required: true
+  - type: textarea
+    id: datos
+    attributes:
+      label: "¿Qué sensor(es), plataforma y bandas/índices se utilizaron?"
+    validations:
+      required: true
+  - type: textarea
+    id: metodologia
+    attributes:
+      label: "Describe en 2-3 pasos la metodología principal del estudio"
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: "¿Cuál fue la decisión metodológica más importante y por qué?"
+    validations:
+      required: true
+  - type: textarea
+    id: transferencia
+    attributes:
+      label: "¿Qué parte de esta metodología podría aplicarse a un estudio en Cuenca?"
+    validations:
+      required: false
+  - type: checkboxes
+    id: declaracion
+    attributes:
+      label: Declaración
+      options:
+        - label: Confirmo que leí el artículo asignado y que estas respuestas reflejan mi propia comprensión del texto.
+          required: true
