@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Práctica 1 · Introducción a Google Earth Engine</title>
+<style>
+  :root{
+    --bg:#0f1b16;
+    --panel:#15241d;
+    --panel-2:#1b2e24;
+    --accent:#4fb286;
+    --accent-2:#7fd4ab;
+    --text:#eaf2ec;
+    --muted:#9db3a7;
+    --border:#28382f;
+    --code-bg:#0c1511;
+    --warn:#e0a94f;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f4f8f5;
+      --panel:#ffffff;
+      --panel-2:#eef4f0;
+      --accent:#1f7a53;
+      --accent-2:#2fa871;
+      --text:#132019;
+      --muted:#4c5f55;
+      --border:#dbe6df;
+      --code-bg:#101b15;
+      --warn:#9a6a10;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.6;
+  }
+  header.hero{
+    padding:48px 20px 36px;
+    background:
+      radial-gradient(1200px 400px at 10% -10%, rgba(79,178,134,0.25), transparent),
+      var(--panel);
+    border-bottom:1px solid var(--border);
+    text-align:center;
+  }
+  header.hero .kicker{
+    color:var(--accent-2);
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    font-size:.78rem;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  header.hero h1{
+    margin:0 0 10px;
+    font-size:clamp(1.6rem, 3.4vw, 2.3rem);
+  }
+  header.hero p.sub{
+    color:var(--muted);
+    max-width:640px;
+    margin:0 auto;
+    font-size:.98rem;
+  }
+  .wrap{
+    max-width:880px;
+    margin:0 auto;
+    padding:0 20px 80px;
+  }
+  nav.toc{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:center;
+    margin:22px auto 0;
+    max-width:880px;
+    padding:0 20px;
+  }
+  nav.toc a{
+    font-size:.82rem;
+    color:var(--text);
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    padding:6px 12px;
+    border-radius:999px;
+    text-decoration:none;
+    white-space:nowrap;
+  }
+  nav.toc a:hover{ border-color:var(--accent); color:var(--accent-2); }
+
+  section{
+    margin-top:40px;
+  }
+  section h2{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:1.3rem;
+    border-bottom:2px solid var(--accent);
+    padding-bottom:8px;
+    margin-bottom:16px;
+  }
+  section h2 .n{
+    background:var(--accent);
+    color:#07140d;
+    width:28px;height:28px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.85rem;
+    font-weight:700;
+    flex:none;
+  }
+  h3{ font-size:1.05rem; margin:22px 0 8px; color:var(--accent-2); }
+  p{ margin:0 0 12px; }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px 20px;
+    margin:14px 0;
+  }
+  .grid2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  @media (max-width:640px){ .grid2{ grid-template-columns:1fr; } }
+
+  .tag{
+    display:inline-block;
+    font-size:.72rem;
+    font-weight:700;
+    letter-spacing:.04em;
+    color:#07140d;
+    background:var(--accent-2);
+    padding:2px 9px;
+    border-radius:999px;
+    margin-right:6px;
+  }
+  .objetivo-list{
+    list-style:none;
+    margin:0; padding:0;
+  }
+  .objetivo-list li{
+    display:flex;
+    gap:10px;
+    padding:8px 0;
+    border-bottom:1px dashed var(--border);
+  }
+  .objetivo-list li:last-child{ border-bottom:none; }
+  .objetivo-list li::before{
+    content:"✓";
+    color:var(--accent-2);
+    font-weight:700;
+    flex:none;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:.92rem;
+    margin:10px 0 4px;
+  }
+  caption{ text-align:left; color:var(--muted); font-size:.82rem; margin-bottom:6px; }
+  th, td{
+    text-align:left;
+    padding:9px 10px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  th{
+    background:var(--panel-2);
+    font-size:.78rem;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    color:var(--muted);
+  }
+  tr:hover td{ background:rgba(79,178,134,0.06); }
+  .swatch{
+    display:inline-block;
+    width:14px;height:14px;
+    border-radius:3px;
+    margin-right:6px;
+    vertical-align:middle;
+    border:1px solid rgba(0,0,0,.25);
+  }
+
+  pre{
+    background:var(--code-bg);
+    color:#d7ecdf;
+    padding:16px 18px;
+    border-radius:10px;
+    overflow-x:auto;
+    font-size:.84rem;
+    line-height:1.55;
+    border:1px solid var(--border);
+  }
+  code{ font-family:"Fira Code","Consolas",monospace; }
+  .inline-code{
+    background:var(--panel-2);
+    padding:1px 6px;
+    border-radius:5px;
+    font-family:"Fira Code","Consolas",monospace;
+    font-size:.88em;
+    border:1px solid var(--border);
+  }
+  .code-label{
+    font-size:.75rem;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    margin-bottom:6px;
+  }
+
+  .steps{
+    counter-reset:step;
+    list-style:none;
+    margin:0; padding:0;
+  }
+  .steps li{
+    counter-increment:step;
+    position:relative;
+    padding:4px 0 16px 42px;
+    border-left:2px solid var(--border);
+    margin-left:14px;
+  }
+  .steps li:last-child{ border-left-color:transparent; padding-bottom:0; }
+  .steps li::before{
+    content:counter(step);
+    position:absolute;
+    left:-15px; top:0;
+    width:28px; height:28px;
+    background:var(--accent);
+    color:#07140d;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;
+    font-size:.85rem;
+  }
+
+  .note{
+    background:rgba(224,169,79,0.1);
+    border:1px solid rgba(224,169,79,0.4);
+    border-radius:10px;
+    padding:12px 16px;
+    font-size:.92rem;
+  }
+  .note strong{ color:var(--warn); }
+
+  .checklist{
+    list-style:none; margin:0; padding:0;
+  }
+  .checklist li{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:8px 0;
+    border-bottom:1px dashed var(--border);
+  }
+  .checklist li:last-child{ border-bottom:none; }
+  .checklist input[type=checkbox]{
+    margin-top:3px;
+    width:16px;height:16px;
+    accent-color:var(--accent);
+    flex:none;
+  }
+
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:.82rem;
+    padding:30px 20px 50px;
+    border-top:1px solid var(--border);
+    margin-top:50px;
+  }
+
+  a.btn-copy{
+    display:inline-block;
+    font-size:.78rem;
+    color:var(--accent-2);
+    border:1px solid var(--accent);
+    padding:4px 10px;
+    border-radius:7px;
+    cursor:pointer;
+    background:none;
+    margin-bottom:8px;
+  }
+  a.btn-copy:hover{ background:rgba(79,178,134,0.12); }
+
+  figure{
+    margin:18px 0;
+  }
+  figure img{
+    width:100%;
+    display:block;
+    border-radius:10px;
+    border:1px solid var(--border);
+    box-shadow:0 4px 18px rgba(0,0,0,.25);
+  }
+  figcaption{
+    margin-top:8px;
+    font-size:.84rem;
+    color:var(--muted);
+    text-align:center;
+  }
+  figcaption strong{ color:var(--text); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="kicker">Sensores Remotos · Ayudantía de cátedra</div>
+  <h1>Práctica 1 — Introducción a Google Earth Engine</h1>
+  <p class="sub">Exploración de la plataforma, búsqueda de datos satelitales y un primer ejercicio de composición de bandas con imágenes Landsat 8.</p>
+</header>
+
+<nav class="toc">
+  <a href="#objetivos">Objetivos</a>
+  <a href="#que-es">¿Qué es GEE?</a>
+  <a href="#interfaz">Interfaz</a>
+  <a href="#datos">Búsqueda de datos</a>
+  <a href="#bandas">Composición de bandas</a>
+  <a href="#codigo">Script de la práctica</a>
+  <a href="#ejercicio">Ejercicio paso a paso</a>
+  <a href="#entrega">Entrega</a>
+</nav>
+
+<div class="wrap">
+
+  <section id="objetivos">
+    <h2><span class="n">1</span>Objetivos de la práctica</h2>
+    <div class="card">
+      <ul class="objetivo-list">
+        <li>Reconocer los elementos principales de la interfaz de Google Earth Engine (Code Editor).</li>
+        <li>Buscar y cargar una colección de imágenes satelitales desde el catálogo de datos.</li>
+        <li>Aplicar filtros básicos por fecha, ubicación y porcentaje de nubosidad.</li>
+        <li>Generar distintas composiciones de bandas (RGB) a partir de una misma imagen.</li>
+        <li>Calcular e interpretar dos índices espectrales simples: NDVI y NDWI.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="que-es">
+    <h2><span class="n">2</span>¿Qué es Google Earth Engine?</h2>
+    <p>
+      Google Earth Engine (GEE) es una plataforma de procesamiento geoespacial en la nube que combina un catálogo
+      público de imágenes satelitales (Landsat, Sentinel, MODIS, entre otros) con un entorno de programación
+      (JavaScript o Python) para analizarlas sin necesidad de descargarlas previamente. Esto es especialmente útil
+      en teledetección, donde una sola escena puede pesar cientos de megabytes y un análisis multitemporal puede
+      requerir decenas o cientos de imágenes.
+    </p>
+    <div class="note">
+      <strong>Para tener en cuenta:</strong> todo el procesamiento ocurre en los servidores de Google. El código que
+      escribimos no "descarga" la imagen a nuestra computadora, sino que construye instrucciones que se ejecutan
+      remotamente y solo traen el resultado final (una visualización, un valor o un archivo exportado).
+    </div>
+  </section>
+
+  <section id="interfaz">
+    <h2><span class="n">3</span>Explorando la interfaz (Code Editor)</h2>
+    <p>Al entrar a <span class="inline-code">code.earthengine.google.com</span> encontramos cinco paneles principales:</p>
+
+    <figure>
+      <img src="img/gee_interfaz.png" alt="Interfaz del Code Editor de Google Earth Engine, mostrando el panel de scripts a la izquierda, el editor central y la consola a la derecha">
+      <figcaption><strong>Figura 1.</strong> Vista general del Code Editor: a la izquierda el panel de Scripts/Docs/Assets, al centro el editor de código y el mapa, y a la derecha el Inspector/Console.</figcaption>
+    </figure>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Panel izquierdo</h3>
+        <p><strong>Scripts:</strong> guarda y organiza tus códigos en un repositorio propio.<br>
+        <strong>Docs:</strong> documentación de cada función disponible en la API.<br>
+        <strong>Assets:</strong> tus propios archivos subidos (shapefiles, imágenes, tablas).</p>
+      </div>
+      <div class="card">
+        <h3>Panel central</h3>
+        <p><strong>Editor de código:</strong> donde se escribe el script en JavaScript.<br>
+        <strong>Mapa:</strong> en la parte inferior, muestra las capas que agregamos con <span class="inline-code">Map.addLayer()</span>.</p>
+      </div>
+      <div class="card">
+        <h3>Panel derecho</h3>
+        <p><strong>Console:</strong> muestra los resultados de <span class="inline-code">print()</span> y los mensajes de error.<br>
+        <strong>Inspector:</strong> permite hacer clic sobre el mapa para ver los valores de píxel en ese punto.</p>
+      </div>
+      <div class="card">
+        <h3>Barra superior</h3>
+        <p>Buscador del catálogo de datos, botón <strong>Run</strong> para ejecutar el script, y el botón <strong>Get Link</strong> para compartir el código con otra persona.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="datos">
+    <h2><span class="n">4</span>Búsqueda de datos</h2>
+    <p>
+      El catálogo de datos (<span class="inline-code">Data Catalog</span>, accesible desde el buscador en la parte
+      superior) permite encontrar colecciones satelitales por nombre, sensor o tema. Cada colección tiene un
+      identificador único que se usa en el código, por ejemplo:
+    </p>
+
+    <figure>
+      <img src="img/gee_busqueda_landsat.png" alt="Resultados del buscador de Google Earth Engine al escribir 'Landsat', mostrando varias colecciones ráster disponibles en el catálogo">
+      <figcaption><strong>Figura 2.</strong> Resultado de buscar "Landsat" en el buscador superior: el catálogo agrupa los resultados en Places, Rasters y Tables. Cada colección ráster corresponde a un identificador distinto según el satélite, la colección y el nivel de procesamiento.</figcaption>
+    </figure>
+
+    <pre><div class="code-label">Identificador de colección</div><code>'LANDSAT/LC08/C02/T1_RT_TOA'</code></pre>
+    <p>
+      Ese identificador corresponde a las imágenes <strong>Landsat 8</strong>, Colección 2, Nivel 1 (Top of Atmosphere),
+      en tiempo casi real. La ficha de cada colección en el catálogo indica, entre otras cosas: el rango de fechas
+      disponible, la resolución espacial, y el nombre y número de cada banda espectral — información indispensable
+      antes de construir cualquier composición de bandas.
+    </p>
+    <h3>Opciones y manejo básico de una colección</h3>
+    <p>Una vez cargada la colección, se puede acotar con tres filtros muy comunes:</p>
+    <table>
+      <thead><tr><th>Función</th><th>Qué hace</th></tr></thead>
+      <tbody>
+        <tr><td><span class="inline-code">.filterBounds(geometry)</span></td><td>Conserva solo las imágenes que intersectan el área de estudio.</td></tr>
+        <tr><td><span class="inline-code">.filterDate('2017-01-01','2017-12-31')</span></td><td>Conserva solo las imágenes dentro de ese rango de fechas.</td></tr>
+        <tr><td><span class="inline-code">.filter(ee.Filter.lt('CLOUD_COVER', 30))</span></td><td>Descarta las imágenes con más de 30% de nubosidad.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="bandas">
+    <h2><span class="n">5</span>Ejercicio básico de composición de bandas</h2>
+    <p>
+      Una imagen Landsat 8 contiene varias bandas espectrales, cada una sensible a una porción distinta del espectro
+      electromagnético. Una "composición de bandas" consiste en asignar tres bandas a los canales Rojo, Verde y Azul
+      (RGB) de la pantalla para resaltar un tipo de información específico. La siguiente tabla resume las
+      combinaciones que trabajaremos hoy:
+    </p>
+    <table>
+      <caption>R = canal rojo, G = canal verde, B = canal azul de la visualización</caption>
+      <thead><tr><th>Composición</th><th>Bandas (R-G-B)</th><th>Resalta</th></tr></thead>
+      <tbody>
+        <tr><td><span class="swatch" style="background:#c9beae"></span>Color real (432)</td><td>B4 - B3 - B2</td><td>Lo que vería el ojo humano: suelo, agua y vegetación en sus colores naturales.</td></tr>
+        <tr><td><span class="swatch" style="background:#c23b3b"></span>Color falso (543)</td><td>B5 - B4 - B3</td><td>Vegetación en tonos rojos/rosados; muy sensible a la densidad foliar.</td></tr>
+        <tr><td><span class="swatch" style="background:#b78a3a"></span>Uso agrícola (652)</td><td>B6 - B5 - B2</td><td>Diferencia cultivos y suelo desnudo; útil para delimitar parcelas.</td></tr>
+        <tr><td><span class="swatch" style="background:#4f8f4a"></span>Vegetación vigorosa (562)</td><td>B5 - B6 - B2</td><td>Vegetación sana en verde brillante; ayuda a distinguir su estado fenológico.</td></tr>
+        <tr><td><span class="swatch" style="background:#8b5e83"></span>Urbano (764)</td><td>B7 - B6 - B4</td><td>Superficies construidas y suelo desnudo, en tonos magenta/violeta.</td></tr>
+        <tr><td><span class="swatch" style="background:#6f7f94"></span>Penetración atmosférica (765)</td><td>B7 - B6 - B5</td><td>Reduce el efecto de neblina y aerosoles atmosféricos.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Dos índices espectrales simples</h3>
+    <div class="grid2">
+      <div class="card">
+        <p class="tag">NDVI</p>
+        <p>Índice de Vegetación de Diferencia Normalizada. Usa las bandas NIR (B5) y Rojo (B4):</p>
+        <pre><code>NDVI = (NIR − Red) / (NIR + Red)</code></pre>
+        <p>Valores cercanos a 1 indican vegetación densa y saludable; valores cercanos a 0 o negativos corresponden a suelo desnudo, agua o superficies construidas.</p>
+      </div>
+      <div class="card">
+        <p class="tag">NDWI</p>
+        <p>En este ejercicio se calcula con las bandas NIR (B5) y SWIR2 (B7), siguiendo la formulación de Gao (1996):</p>
+        <pre><code>NDWI = (NIR − SWIR) / (NIR + SWIR)</code></pre>
+        <p>Este índice es sensible al contenido de humedad en la vegetación y el suelo. No debe confundirse con el índice de McFeeters (que usa Verde y NIR) para delimitar cuerpos de agua abiertos.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="codigo">
+    <h2><span class="n">6</span>Script de la práctica</h2>
+    <p>
+      Este es el código que usaremos como base. Antes de ejecutarlo, deben dibujar manualmente una geometría
+      (<span class="inline-code">geometry</span>) sobre su área de estudio en el mapa del Code Editor, usando la
+      herramienta de polígono o rectángulo de la barra superior izquierda del mapa.
+    </p>
+    <div class="code-label">Google Earth Engine · JavaScript</div>
+    <pre><code>////////////////////////////Combinación de Bandas//////////////////////////////
+
+//Creamos un dataset con la colección de imágenes del Landsat 8
+var dataset = ee.ImageCollection('LANDSAT/LC08/C02/T1_RT_TOA')
+    .filterBounds(geometry)
+    .filterDate('2017-01-01', '2017-12-31')
+    .filter(ee.Filter.lt('CLOUD_COVER', 30))
+    ;
+
+//Creamos variables de acuerdo a la combinación de bandas  
+var TrueColor432 = 
+    dataset.select(['B4', 'B3', 'B2']);        //Color Real 432
+var FalseColor543 = 
+    dataset.select(['B5', 'B4', 'B3']);        //Color Falso 543
+var AgroUse652 = 
+    dataset.select(['B6', 'B5', 'B2']);        //Uso Agrícola 652
+var VigVeg562 = 
+    dataset.select(['B5', 'B6', 'B2']);        //Vegetación Vigorosa 562
+var Urban764 = 
+    dataset.select(['B7', 'B6', 'B4']);        //Urbano 764
+var Atmospheric765 = 
+    dataset.select(['B7', 'B6', 'B5']);        //Penetración Atmosférica 765
+var nirRedImage = 
+    dataset.select(['B5', 'B4']);              //Índice de Vegetación
+var nirSwirImage = 
+    dataset.select(['B5', 'B7']);              //Índice de Agua Normalizado
+
+// Función para calcular el NDVI
+var calculateNDVI = function(image) {
+  var nir = image.select('B5');
+  var red = image.select('B4');
+  var ndvi = nir.subtract(red).divide(nir.add(red)).rename('NDVI');
+  return image.addBands(ndvi);
+};
+
+// Función para calcular el NDWI
+var calculateNDWI = function(image) {
+  var nir = image.select('B5');
+  var swir = image.select('B7');
+  var ndwi = nir.subtract(swir).divide(nir.add(swir)).rename('NDWI');
+  return image.addBands(ndwi);
+};
+
+// Aplicamos la función a cada imagen de la colección NDVI
+var ndviCollection = nirRedImage.map(calculateNDVI);
+// Aplicamos la función a cada imagen de la colección
+var ndwiCollection = nirSwirImage.map(calculateNDWI);
+
+//Especificamos parámetros de visualización 
+var ColorVis = {
+  min: 0.0,
+  max: 0.4,
+};
+
+// Especificamos parámetros de visualización para indicadores
+var IndiceVis = {
+  min: -1,
+  max: 1,
+  palette: ['blue', 'white', 'green']
+};
+
+//Creamos una imagen mejorada
+var medianCompositeTC = TrueColor432.median();
+var medianCompositeFC = FalseColor543.median();
+var medianCompositeAU = AgroUse652.median();
+var medianCompositeVV = VigVeg562.median();
+var medianCompositeUR = Urban764.median();
+var medianCompositeAT = Atmospheric765.median();
+var medianCompositeNDVI = ee.Image(ndviCollection.median());
+var medianCompositeNDWI = ee.Image(ndwiCollection.median());
+
+//Agregamos las capas creadas
+Map.addLayer(medianCompositeTC, ColorVis, 'True Color (432)', 0);
+Map.addLayer(medianCompositeFC, ColorVis, 'False Color (543)', 0);
+Map.addLayer(medianCompositeAU, ColorVis, 'Agricultural Use (652)', 0);
+Map.addLayer(medianCompositeVV, ColorVis, 'Vigorous Vegetation (562)', 0);
+Map.addLayer(medianCompositeUR, ColorVis, 'Urbano (764)', 0);
+Map.addLayer(medianCompositeAT, ColorVis, 'Penetracion Atmosférica (765)', 0);
+Map.addLayer(medianCompositeNDVI.select('NDVI'), IndiceVis, 'NDVI', 0);
+Map.addLayer(medianCompositeNDWI.select('NDWI'), IndiceVis, 'NDWI', 0);
+
+//Centramos las capas creadas
+Map.centerObject(geometry, 5.5);
+
+//Agregamos información relevante al proyecto
+print('Metadatos', dataset);
+print('Cantidad de fotos ', dataset.size());</code></pre>
+    <div class="note">
+      <strong>Nota:</strong> en el código original cada capa se agrega con el parámetro <span class="inline-code">0</span>
+      al final de <span class="inline-code">Map.addLayer()</span>, lo que significa que empieza oculta. Actívenla
+      marcando la casilla correspondiente en el panel <em>Layers</em>, sobre el mapa, para compararlas una por una.
+    </div>
+  </section>
+
+  <section id="ejercicio">
+    <h2><span class="n">7</span>Ejercicio paso a paso</h2>
+    <ol class="steps">
+      <li>Ingresen a <span class="inline-code">code.earthengine.google.com</span> con su cuenta y abran un script nuevo.</li>
+      <li>Con la herramienta de geometría, dibujen un polígono pequeño sobre una zona de su interés (urbana, agrícola o de páramo). Esto crea automáticamente la variable <span class="inline-code">geometry</span>.</li>
+      <li>Peguen el script de la sección anterior y presionen <strong>Run</strong>.</li>
+      <li>En el panel <em>Layers</em>, activen una por una las ocho capas generadas y observen cómo cambia la imagen.</li>
+      <li>Usen la herramienta <strong>Inspector</strong> para hacer clic sobre tres puntos distintos de su zona de estudio (por ejemplo: una zona urbana, un cultivo y un cuerpo de agua, si existen) y anoten el valor de NDVI y NDWI en cada punto.</li>
+      <li>Revisen la pestaña <strong>Console</strong> y registren cuántas imágenes conforman la colección filtrada (<span class="inline-code">dataset.size()</span>).</li>
+      <li>Repitan el ejercicio cambiando el rango de fechas del filtro por un año distinto y comparen si cambia la cantidad de imágenes disponibles.</li>
+    </ol>
+  </section>
+
+  <section id="entrega">
+    <h2><span class="n">8</span>Entrega</h2>
+    <div class="card">
+      <p>Al finalizar la práctica, cada estudiante debe entregar un control de lectura en el repositorio de la ayudantía documentando lo siguiente:</p>
+      <ul class="checklist">
+        <li><input type="checkbox" disabled> Enlace al script de Google Earth Engine (compartido con permisos de lectura).</li>
+        <li><input type="checkbox" disabled> Captura de pantalla de al menos dos composiciones de bandas distintas sobre su zona de estudio.</li>
+        <li><input type="checkbox" disabled> Los tres valores de NDVI y NDWI obtenidos con el Inspector, indicando sobre qué tipo de cobertura se tomó cada uno.</li>
+        <li><input type="checkbox" disabled> Una breve interpretación: ¿qué composición de bandas les resultó más útil para identificar su cobertura de interés, y por qué?</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  Sensores Remotos · Universidad de Cuenca — Práctica 1: Introducción a Google Earth Engine
+</footer>
+
+</body>
+</html>
