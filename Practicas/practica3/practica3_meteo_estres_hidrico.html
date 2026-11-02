@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Práctica 3 · Variables meteorológicas y estrés hídrico</title>
+<style>
+  :root{
+    --bg:#0f1b16;
+    --panel:#15241d;
+    --panel-2:#1b2e24;
+    --accent:#4fb286;
+    --accent-2:#7fd4ab;
+    --text:#eaf2ec;
+    --muted:#9db3a7;
+    --border:#28382f;
+    --code-bg:#0c1511;
+    --warn:#e0a94f;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f4f8f5;
+      --panel:#ffffff;
+      --panel-2:#eef4f0;
+      --accent:#1f7a53;
+      --accent-2:#2fa871;
+      --text:#132019;
+      --muted:#4c5f55;
+      --border:#dbe6df;
+      --code-bg:#101b15;
+      --warn:#9a6a10;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.6;
+  }
+  header.hero{
+    padding:48px 20px 36px;
+    background:
+      radial-gradient(1200px 400px at 10% -10%, rgba(79,178,134,0.25), transparent),
+      var(--panel);
+    border-bottom:1px solid var(--border);
+    text-align:center;
+  }
+  header.hero .kicker{
+    color:var(--accent-2);
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    font-size:.78rem;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  header.hero h1{
+    margin:0 0 10px;
+    font-size:clamp(1.6rem, 3.4vw, 2.3rem);
+  }
+  header.hero p.sub{
+    color:var(--muted);
+    max-width:640px;
+    margin:0 auto;
+    font-size:.98rem;
+  }
+  .wrap{
+    max-width:880px;
+    margin:0 auto;
+    padding:0 20px 80px;
+  }
+  nav.toc{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:center;
+    margin:22px auto 0;
+    max-width:880px;
+    padding:0 20px;
+  }
+  nav.toc a{
+    font-size:.82rem;
+    color:var(--text);
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    padding:6px 12px;
+    border-radius:999px;
+    text-decoration:none;
+    white-space:nowrap;
+  }
+  nav.toc a:hover{ border-color:var(--accent); color:var(--accent-2); }
+
+  section{
+    margin-top:40px;
+  }
+  section h2{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:1.3rem;
+    border-bottom:2px solid var(--accent);
+    padding-bottom:8px;
+    margin-bottom:16px;
+  }
+  section h2 .n{
+    background:var(--accent);
+    color:#07140d;
+    width:28px;height:28px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.85rem;
+    font-weight:700;
+    flex:none;
+  }
+  h3{ font-size:1.05rem; margin:22px 0 8px; color:var(--accent-2); }
+  p{ margin:0 0 12px; }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px 20px;
+    margin:14px 0;
+  }
+  .grid2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  @media (max-width:640px){ .grid2{ grid-template-columns:1fr; } }
+
+  .tag{
+    display:inline-block;
+    font-size:.72rem;
+    font-weight:700;
+    letter-spacing:.04em;
+    color:#07140d;
+    background:var(--accent-2);
+    padding:2px 9px;
+    border-radius:999px;
+    margin-right:6px;
+  }
+  .objetivo-list{
+    list-style:none;
+    margin:0; padding:0;
+  }
+  .objetivo-list li{
+    display:flex;
+    gap:10px;
+    padding:8px 0;
+    border-bottom:1px dashed var(--border);
+  }
+  .objetivo-list li:last-child{ border-bottom:none; }
+  .objetivo-list li::before{
+    content:"✓";
+    color:var(--accent-2);
+    font-weight:700;
+    flex:none;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:.92rem;
+    margin:10px 0 4px;
+  }
+  caption{ text-align:left; color:var(--muted); font-size:.82rem; margin-bottom:6px; }
+  th, td{
+    text-align:left;
+    padding:9px 10px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  th{
+    background:var(--panel-2);
+    font-size:.78rem;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    color:var(--muted);
+  }
+  tr:hover td{ background:rgba(79,178,134,0.06); }
+  .swatch{
+    display:inline-block;
+    width:14px;height:14px;
+    border-radius:3px;
+    margin-right:6px;
+    vertical-align:middle;
+    border:1px solid rgba(0,0,0,.25);
+  }
+
+  pre{
+    background:var(--code-bg);
+    color:#d7ecdf;
+    padding:16px 18px;
+    border-radius:10px;
+    overflow-x:auto;
+    font-size:.84rem;
+    line-height:1.55;
+    border:1px solid var(--border);
+  }
+  code{ font-family:"Fira Code","Consolas",monospace; }
+  .inline-code{
+    background:var(--panel-2);
+    padding:1px 6px;
+    border-radius:5px;
+    font-family:"Fira Code","Consolas",monospace;
+    font-size:.88em;
+    border:1px solid var(--border);
+  }
+  .code-label{
+    font-size:.75rem;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    margin-bottom:6px;
+  }
+
+  .steps{
+    counter-reset:step;
+    list-style:none;
+    margin:0; padding:0;
+  }
+  .steps li{
+    counter-increment:step;
+    position:relative;
+    padding:4px 0 16px 42px;
+    border-left:2px solid var(--border);
+    margin-left:14px;
+  }
+  .steps li:last-child{ border-left-color:transparent; padding-bottom:0; }
+  .steps li::before{
+    content:counter(step);
+    position:absolute;
+    left:-15px; top:0;
+    width:28px; height:28px;
+    background:var(--accent);
+    color:#07140d;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;
+    font-size:.85rem;
+  }
+
+  .note{
+    background:rgba(224,169,79,0.1);
+    border:1px solid rgba(224,169,79,0.4);
+    border-radius:10px;
+    padding:12px 16px;
+    font-size:.92rem;
+  }
+  .note strong{ color:var(--warn); }
+
+  .checklist{
+    list-style:none; margin:0; padding:0;
+  }
+  .checklist li{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:8px 0;
+    border-bottom:1px dashed var(--border);
+  }
+  .checklist li:last-child{ border-bottom:none; }
+  .checklist input[type=checkbox]{
+    margin-top:3px;
+    width:16px;height:16px;
+    accent-color:var(--accent);
+    flex:none;
+  }
+
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:.82rem;
+    padding:30px 20px 50px;
+    border-top:1px solid var(--border);
+    margin-top:50px;
+  }
+
+  a.btn-copy{
+    display:inline-block;
+    font-size:.78rem;
+    color:var(--accent-2);
+    border:1px solid var(--accent);
+    padding:4px 10px;
+    border-radius:7px;
+    cursor:pointer;
+    background:none;
+    margin-bottom:8px;
+  }
+  a.btn-copy:hover{ background:rgba(79,178,134,0.12); }
+
+  figure{
+    margin:18px 0;
+  }
+  figure img{
+    width:100%;
+    display:block;
+    border-radius:10px;
+    border:1px solid var(--border);
+    box-shadow:0 4px 18px rgba(0,0,0,.25);
+  }
+  figcaption{
+    margin-top:8px;
+    font-size:.84rem;
+    color:var(--muted);
+    text-align:center;
+  }
+  figcaption strong{ color:var(--text); }
+
+  .codebox{position:relative;margin:10px 0;}
+  .codebox a.btn-copy{position:absolute;top:8px;right:10px;margin:0;z-index:2;background:var(--panel);}
+  .codebox pre{margin:0;padding-top:34px;}
+  .ver{border-left:3px solid var(--accent);background:var(--panel-2);padding:10px 14px;border-radius:0 10px 10px 0;margin:10px 0;font-size:.93rem;}
+  .ver strong{color:var(--accent-2);}
+  .preg{border-left:3px solid var(--warn);background:rgba(224,169,79,0.08);padding:10px 14px;border-radius:0 10px 10px 0;margin:10px 0;font-size:.93rem;}
+  .preg strong{color:var(--warn);}
+  .paso h3{margin-top:34px;font-size:1.12rem;}
+  .paso .tag{background:var(--accent);}
+  .codebox{position:relative;margin:10px 0;}
+  .codebox a.btn-copy{position:absolute;top:8px;right:10px;margin:0;z-index:2;background:var(--panel);}
+  .codebox pre{margin:0;padding-top:34px;}
+  .ver,.preg{border-left:3px solid var(--accent);background:var(--panel-2);padding:10px 14px;border-radius:0 10px 10px 0;margin:12px 0;font-size:.93rem;}
+  .preg{border-left-color:var(--warn);background:rgba(224,169,79,0.08);}
+  .ver strong:first-child{color:var(--accent-2);} .preg strong:first-child{color:var(--warn);}
+  .ver ul,.preg ul{margin:8px 0 0;padding-left:20px;} .ver li,.preg li{margin-bottom:6px;}
+  .paso h3{margin-top:34px;font-size:1.12rem;} .paso .tag{background:var(--accent);}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="kicker">Sensores Remotos · Ayudantía de cátedra</div>
+  <h1>Práctica 3 — Variables meteorológicas y estrés hídrico</h1>
+  <p class="sub">Primero se verifican las fuentes de datos (CHIRPS, ERA5-Land, TerraClimate y MODIS), luego se construye un climograma y, al final, se analiza el estrés hídrico de una cuenca con el CWSI.</p>
+</header>
+
+<nav class="toc">
+  <a href="#objetivos">Objetivos</a>
+  <a href="#fuentes">Fuentes</a>
+  <a href="#conceptos">Conceptos</a>
+  <a href="#preparacion">Preparación</a>
+  <a href="#etapas">Etapas</a>
+  <a href="#cautelas">Cuidados</a>
+  <a href="#entrega">Entrega</a>
+</nav>
+
+<div class="wrap">
+
+  <section id="objetivos">
+    <h2><span class="n">1</span>Objetivos de la práctica</h2>
+    <div class="card">
+      <ul class="objetivo-list">
+        <li>Verificar datos meteorológicos de varias fuentes gratuitas antes de usarlos: unidades, escala y coincidencia entre ellas.</li>
+        <li>Construir e interpretar un climograma de una cuenca.</li>
+        <li>Calcular indicadores de estrés hídrico (P/PET, CWSI y déficit climático) y mapear el CWSI con MODIS.</li>
+        <li>Practicar histogramas, gráficos de series y estadísticas por región en Google Earth Engine.</li>
+      </ul>
+    </div>
+    <div class="note"><strong>Idea central:</strong> un dato satelital o de reanálisis no es una medición directa. Antes de interpretarlo hay que saber qué es, en qué unidades viene y cuánto se parece a otras fuentes.</div>
+  </section>
+
+  <section id="fuentes">
+    <h2><span class="n">2</span>Las fuentes de datos</h2>
+    <table>
+      <caption>Tabla 1. Fuentes usadas en la práctica y cuidados de cada una</caption>
+      <thead><tr><th>Fuente</th><th>Variables</th><th>Resolución</th><th>Cuidado</th></tr></thead>
+      <tbody>
+        <tr><td><strong>CHIRPS</strong></td><td>Precipitación</td><td>~5 km, diaria (1981 a la actualidad)</td><td>Viene en mm/día: hay que sumar al mes. Combina satélite y estaciones.</td></tr>
+        <tr><td><strong>ERA5-Land</strong> (mensual)</td><td>Temperatura, precipitación, evaporación real y potencial</td><td>~11 km, mensual</td><td>Reanálisis (modelo). Precipitación en <strong>metros</strong>, temperatura en <strong>kelvin</strong> y evaporación con signo <strong>negativo</strong>.</td></tr>
+        <tr><td><strong>TerraClimate</strong></td><td>T máx/mín, precipitación, AET, PET, déficit</td><td>~4,6 km, mensual</td><td>La mayoría de bandas llevan factor de escala 0,1. La serie termina antes que las demás: confirmen el último mes en el catálogo.</td></tr>
+        <tr><td><strong>MOD16A2GF</strong> (MODIS)</td><td>ET y PET</td><td>500 m, cada 8 días</td><td>Factor de escala 0,1; unidad kg/m² por 8 días (equivale a mm). Los valores de relleno superan 32 700 y se enmascaran.</td></tr>
+        <tr><td><strong>MCD12Q1</strong> y <strong>HydroSHEDS</strong></td><td>Cobertura IGBP y cuencas</td><td>500 m anual y polígonos</td><td>Se usan para enmascarar por cobertura y para delimitar la cuenca.</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><strong>Revisen el catálogo:</strong> los nombres de colecciones, las bandas y las fechas de cobertura pueden cambiar. Antes de la práctica abran cada colección en el buscador de GEE y confirmen que existe y hasta qué fecha llega.</div>
+  </section>
+
+  <section id="conceptos">
+    <h2><span class="n">3</span>Conceptos clave</h2>
+    <div class="grid2">
+      <div class="card">
+        <p class="tag">Climograma</p>
+        <p>Gráfico del promedio mensual de precipitación (barras) y temperatura (línea) a lo largo del año. Permite ver el régimen de lluvias y las épocas secas de un solo vistazo.</p>
+      </div>
+      <div class="card">
+        <p class="tag">ET y PET</p>
+        <p><strong>ET (real):</strong> agua que realmente se evapora y transpira.<br><strong>PET (potencial):</strong> la que se evaporaría si hubiera agua suficiente. La diferencia entre ambas indica falta de agua.</p>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <p class="tag">CWSI</p>
+        <pre><code>CWSI = 1 − ET / PET</code></pre>
+        <p>0: la planta evapora lo que la atmósfera demanda (sin estrés). 1: casi no evapora pese a la demanda (estrés máximo).</p>
+      </div>
+      <div class="card">
+        <p class="tag">P/PET y déficit</p>
+        <p>P/PET menor a 1 significa que la atmósfera demanda más agua de la que llueve. El déficit de TerraClimate es PET − AET, en mm: cuánta agua faltó para cubrir la demanda.</p>
+      </div>
+    </div>
+    <div class="note"><strong>Ojo con el nombre:</strong> aquí se usa la forma teórica 1 − ET/PET calculada con productos satelitales. No es el CWSI empírico basado en la temperatura del dosel (Jackson et al., 1981), que lleva el mismo nombre. En el reporte indiquen cuál usan.</div>
+  </section>
+
+  <section id="preparacion">
+    <h2><span class="n">4</span>Preparación</h2>
+    <ol class="steps">
+      <li>Ingresen a <span class="inline-code">code.earthengine.google.com</span> y abran un script nuevo.</li>
+      <li>El punto de la zona de estudio y los parámetros están en la Etapa 1. Para el desafío final, cambien el punto a una cuenca costera (por ejemplo <span class="inline-code">[-79.64, -2.29]</span>) y comparen.</li>
+      <li>Copien cada etapa en orden, completen los espacios y ejecútenla con <strong>Run</strong>.</li>
+      <li>Revisen la <em>Console</em> (gráficos y tablas) y el panel <em>Layers</em> (mapas) antes de pasar a la siguiente etapa.</li>
+    </ol>
+  </section>
+
+  <section id="etapas">
+    <h2><span class="n">5</span>Práctica por etapas</h2>
+    <p>Cuatro etapas y diez pasos, con 9 espacios en blanco. Ejecuten cada etapa completa y revisen la <em>Console</em> y el panel <em>Layers</em> antes de seguir. Las etapas usan las variables de las anteriores, así que no cambien su orden. Los cálculos recorren 23 años de datos y pueden tardar: esperen a que termine cada gráfico.</p>
+    <table>
+      <caption>Tabla 2. Contenido de cada etapa</caption>
+      <thead><tr><th>Etapa</th><th>Tema</th><th>Pasos</th><th>Espacios</th></tr></thead>
+      <tbody><tr><td>Etapa 1</td><td>Cuenca y fuentes de datos</td><td>Configuración de la cuenca y del periodo; Cargar las fuentes y unificar unidades</td><td>4</td></tr>
+<tr><td>Etapa 2</td><td>Verificación de las fuentes</td><td>Comparar las fuentes en el espacio; Climatología mensual por fuente; Gráficos y métricas de verificación</td><td>0</td></tr>
+<tr><td>Etapa 3</td><td>Climograma</td><td>Climograma; Años húmedos y años secos</td><td>2</td></tr>
+<tr><td>Etapa 4</td><td>Estrés hídrico</td><td>Índices de estrés hídrico mensuales; Mapa de CWSI; Cobertura, histograma y serie de CWSI</td><td>3</td></tr></tbody>
+    </table>
+    <div class="paso" id="etapa1">
+      <h3><span class="tag">ETAPA 1</span>Cuenca y fuentes de datos</h3>
+      <p>Se define la cuenca y el periodo, se cargan las cuatro fuentes y se llevan a las mismas unidades. Si esta etapa tiene un error de unidades, todo lo demás estará mal aunque el código corra.</p>
+      <div class="code-label">Google Earth Engine · JavaScript · pasos 0, 1 · 4 espacios en blanco</div>
+      <div class="codebox"><a class="btn-copy" href="#" role="button">Copiar código</a><pre><code>// ===== PASO 0 · CONFIGURACIÓN DE LA CUENCA Y DEL PERIODO =====
+var punto = ee.Geometry.Point([-79.00, -2.90]);   // un punto dentro de la cuenca de estudio
+var ROI = ee.FeatureCollection(&#x27;WWF/HydroSHEDS/v1/Basins/hybas_8&#x27;).filterBounds(punto);
+var roiGeom = ROI.geometry();
+
+var ANIO_INI = 2001;
+var ANIO_FIN = 2023;      // periodo común a todas las fuentes
+var ESCALA   = 5000;      // m, para las estadísticas regionales
+var SECO_INI = 7;         // meses secos: se ajustarán tras ver el climograma
+var SECO_FIN = 9;
+var CLASE_LC = 12;        // clase IGBP para enmascarar (12 = cultivos); null = sin máscara
+
+var anios = ee.List.sequence(ANIO_INI, ANIO_FIN);
+var meses = ee.List.sequence(1, 12);
+var fIni  = ee.Date.fromYMD(ANIO_INI, 1, 1);
+var fFin  = ee.Date.fromYMD(ANIO_FIN, 12, 31);
+
+Map.centerObject(roiGeom, 9);
+Map.addLayer(ROI.style({color: &#x27;000000&#x27;, fillColor: &#x27;00000000&#x27;}), {}, &#x27;Cuenca (ROI)&#x27;);
+Map.addLayer(punto, {color: &#x27;red&#x27;}, &#x27;Punto de referencia&#x27;);
+
+// ===== PASO 1 · CARGAR LAS FUENTES Y UNIFICAR UNIDADES =====
+// Unidades finales: P, ET y PET en mm/mes; T en °C
+
+// ---- CHIRPS (diario, mm/día, ~5 km) -&gt; suma mensual
+var chirps = ee.ImageCollection(&#x27;UCSB-CHG/CHIRPS/DAILY&#x27;).select(&#x27;precipitation&#x27;);
+var chirpsM = ee.ImageCollection.fromImages(
+  anios.map(function (y) {
+    return meses.map(function (m) {
+      var ini = ee.Date.fromYMD(y, m, 1);
+      return chirps.filterDate(ini, ini.advance(1, &#x27;month&#x27;)).sum()
+                   .rename(&#x27;P_chirps&#x27;)
+                   .set({&#x27;system:time_start&#x27;: ini.millis(), &#x27;year&#x27;: y, &#x27;month&#x27;: m});
+    });
+  }).flatten()
+);
+
+// ---- ERA5-Land mensual (~11 km). Precipitación en METROS, temperatura en KELVIN,
+//      evaporación con signo NEGATIVO
+var era5 = ee.ImageCollection(&#x27;ECMWF/ERA5_LAND/MONTHLY_AGGR&#x27;)
+  .filterDate(fIni, fFin.advance(1, &#x27;day&#x27;))
+  .map(function (img) {
+    // COMPLETAR: metros -&gt; mm (factor) y kelvin -&gt; °C (valor a restar)
+    var P   = img.select(&#x27;total_precipitation_sum&#x27;).multiply(____).rename(&#x27;P_era5&#x27;);
+    var T   = img.select(&#x27;temperature_2m&#x27;).subtract(____).rename(&#x27;T_era5&#x27;);
+    var ET  = img.select(&#x27;total_evaporation_sum&#x27;).multiply(-1000).rename(&#x27;ET_era5&#x27;);
+    var PET = img.select(&#x27;potential_evaporation_sum&#x27;).multiply(-1000).rename(&#x27;PET_era5&#x27;);
+    return ee.Image.cat([P, T, ET, PET]).copyProperties(img, [&#x27;system:time_start&#x27;]);
+  });
+
+// ---- TerraClimate mensual (~4.6 km). Las bandas vienen con factor de escala
+var tc = ee.ImageCollection(&#x27;IDAHO_EPSCOR/TERRACLIMATE&#x27;)
+  .filterDate(fIni, fFin.advance(1, &#x27;day&#x27;))
+  .map(function (img) {
+    var P   = img.select(&#x27;pr&#x27;).rename(&#x27;P_tc&#x27;);                           // mm
+    var T   = img.select(&#x27;tmmx&#x27;).add(img.select(&#x27;tmmn&#x27;))
+                 .multiply(0.1).divide(2).rename(&#x27;T_tc&#x27;);                 // °C (media de tmax y tmin)
+    // COMPLETAR: factor de escala de TerraClimate para aet (igual al de pet y def)
+    var ET  = img.select(&#x27;aet&#x27;).multiply(____).rename(&#x27;ET_tc&#x27;);
+    var PET = img.select(&#x27;pet&#x27;).multiply(0.1).rename(&#x27;PET_tc&#x27;);
+    var DEF = img.select(&#x27;def&#x27;).multiply(0.1).rename(&#x27;DEF_tc&#x27;);          // PET - AET
+    return ee.Image.cat([P, T, ET, PET, DEF]).copyProperties(img, [&#x27;system:time_start&#x27;]);
+  });
+
+// ---- MODIS MOD16A2GF (500 m, cada 8 días, mm por 8 días)
+var mod16 = ee.ImageCollection(&#x27;MODIS/061/MOD16A2GF&#x27;)
+  .filterDate(fIni, fFin.advance(1, &#x27;day&#x27;))
+  .select([&#x27;ET&#x27;, &#x27;PET&#x27;])
+  .map(function (img) {
+    var valido = img.select(&#x27;ET&#x27;).lte(32700);          // los valores de relleno superan 32700
+    // COMPLETAR: factor de escala de MOD16
+    return img.updateMask(valido).multiply(____)
+              .copyProperties(img, [&#x27;system:time_start&#x27;]);
+  });
+
+// MODIS a mensual: promedio de los compuestos del mes x días del mes
+var modisM = ee.ImageCollection.fromImages(
+  anios.map(function (y) {
+    return meses.map(function (m) {
+      var ini  = ee.Date.fromYMD(y, m, 1);
+      var fin  = ini.advance(1, &#x27;month&#x27;);
+      var dias = fin.difference(ini, &#x27;day&#x27;);
+      var prom = mod16.filterDate(ini, fin).mean();
+      return prom.multiply(dias.divide(8)).toFloat()
+                 .rename([&#x27;ET_modis&#x27;, &#x27;PET_modis&#x27;])
+                 .set({&#x27;system:time_start&#x27;: ini.millis(), &#x27;year&#x27;: y, &#x27;month&#x27;: m});
+    });
+  }).flatten()
+);
+
+print(&#x27;Meses CHIRPS (esperado &#x27; + (ANIO_FIN - ANIO_INI + 1) * 12 + &#x27;):&#x27;, chirpsM.size());
+print(&#x27;Meses ERA5-Land:&#x27;, era5.size());
+print(&#x27;Meses TerraClimate:&#x27;, tc.size());
+print(&#x27;Compuestos MODIS de 8 días:&#x27;, mod16.size());</code></pre></div>
+      <div class="ver"><strong>Qué deben ver al ejecutar</strong><ul><li><strong>Paso 0 · Configuración de la cuenca y del periodo:</strong> El contorno negro de la cuenca y un punto rojo. Cambien el mapa base a <em>Terreno</em> o <em>Satélite</em> y ubiquen la cuenca respecto al relieve.</li><li><strong>Paso 1 · Cargar las fuentes y unificar unidades:</strong> Cuatro conteos en la <em>Console</em>. CHIRPS, ERA5-Land y TerraClimate deben dar el mismo número de meses (276 para 2001-2023). Si alguno no coincide, revisen el periodo y los nombres de las colecciones.</li></ul></div>
+      <div class="preg"><strong>Preguntas para el reporte</strong><ul><li><strong>Paso 0:</strong> ¿Qué rango de altitudes y qué tipo de relieve tiene la cuenca? ¿Cómo podría afectar a los datos de lluvia y temperatura?</li><li><strong>Paso 1:</strong> ¿Qué pasaría con la precipitación de ERA5-Land si olvidaran convertir de metros a mm? ¿Y con la temperatura si olvidaran restar los kelvin?</li></ul></div>
+      <ul class="checklist"><li><input type="checkbox"> Etapa 1 completada y ejecutada sin errores.</li></ul>
+    </div>
+    <div class="paso" id="etapa2">
+      <h3><span class="tag">ETAPA 2</span>Verificación de las fuentes</h3>
+      <p>¿Las fuentes cuentan la misma historia? Se comparan primero en el mapa, luego mes a mes con gráficos y al final con métricas. Esta etapa decide qué fuentes se usarán después.</p>
+      <div class="code-label">Google Earth Engine · JavaScript · pasos 2, 3, 4 · sin espacios en blanco</div>
+      <div class="codebox"><a class="btn-copy" href="#" role="button">Copiar código</a><pre><code>// ===== PASO 2 · PRECIPITACIÓN ANUAL EN EL ESPACIO =====
+var visP = {min: 500, max: 3000, palette: [&#x27;#f7fbff&#x27;, &#x27;#6baed6&#x27;, &#x27;#08306b&#x27;]};
+
+// promedio mensual x 12 = precipitación anual media (mm/año)
+var pChirpsAnual = chirpsM.select(&#x27;P_chirps&#x27;).mean().multiply(12).clip(roiGeom);
+var pEra5Anual   = era5.select(&#x27;P_era5&#x27;).mean().multiply(12).clip(roiGeom);
+var pTcAnual     = tc.select(&#x27;P_tc&#x27;).mean().multiply(12).clip(roiGeom);
+
+Map.addLayer(pChirpsAnual, visP, &#x27;P anual CHIRPS (5 km)&#x27;);
+Map.addLayer(pEra5Anual,   visP, &#x27;P anual ERA5-Land (11 km)&#x27;, 0);
+Map.addLayer(pTcAnual,     visP, &#x27;P anual TerraClimate (4.6 km)&#x27;, 0);
+
+// Histograma espacial: distribución de la precipitación anual en los píxeles
+print(ui.Chart.image.histogram(pTcAnual, roiGeom, ESCALA)
+  .setOptions({title: &#x27;Histograma espacial de P anual (TerraClimate)&#x27;,
+               hAxis: {title: &#x27;mm/año&#x27;}, vAxis: {title: &#x27;N.º de píxeles&#x27;}}));
+
+// ===== PASO 3 · CLIMATOLOGÍA MENSUAL =====
+function climMes(col, banda, m) {
+  var img = col.filter(ee.Filter.calendarRange(m, m, &#x27;month&#x27;)).select(banda).mean();
+  return ee.Number(img.reduceRegion({
+    reducer: ee.Reducer.mean(), geometry: roiGeom,
+    scale: ESCALA, bestEffort: true, maxPixels: 1e9
+  }).get(banda));
+}
+
+var climatologia = ee.FeatureCollection(meses.map(function (m) {
+  m = ee.Number(m);
+  return ee.Feature(null, {
+    mes:       m,
+    P_chirps:  climMes(chirpsM, &#x27;P_chirps&#x27;, m),
+    P_era5:    climMes(era5, &#x27;P_era5&#x27;, m),
+    P_tc:      climMes(tc, &#x27;P_tc&#x27;, m),
+    T_era5:    climMes(era5, &#x27;T_era5&#x27;, m),
+    T_tc:      climMes(tc, &#x27;T_tc&#x27;, m),
+    ET_modis:  climMes(modisM, &#x27;ET_modis&#x27;, m),
+    ET_era5:   climMes(era5, &#x27;ET_era5&#x27;, m),
+    ET_tc:     climMes(tc, &#x27;ET_tc&#x27;, m),
+    PET_modis: climMes(modisM, &#x27;PET_modis&#x27;, m),
+    PET_era5:  climMes(era5, &#x27;PET_era5&#x27;, m),
+    PET_tc:    climMes(tc, &#x27;PET_tc&#x27;, m),
+    DEF_tc:    climMes(tc, &#x27;DEF_tc&#x27;, m)
+  });
+}));
+print(&#x27;Tabla de climatología mensual:&#x27;, climatologia);
+
+// ===== PASO 4 · GRÁFICOS Y MÉTRICAS DE VERIFICACIÓN =====
+print(ui.Chart.feature.byFeature(climatologia, &#x27;mes&#x27;, [&#x27;P_chirps&#x27;, &#x27;P_era5&#x27;, &#x27;P_tc&#x27;])
+  .setChartType(&#x27;ColumnChart&#x27;)
+  .setSeriesNames([&#x27;CHIRPS&#x27;, &#x27;ERA5-Land&#x27;, &#x27;TerraClimate&#x27;])
+  .setOptions({title: &#x27;Precipitación mensual media por fuente&#x27;,
+               hAxis: {title: &#x27;Mes&#x27;}, vAxis: {title: &#x27;mm/mes&#x27;}}));
+
+print(ui.Chart.feature.byFeature(climatologia, &#x27;mes&#x27;, [&#x27;T_era5&#x27;, &#x27;T_tc&#x27;])
+  .setChartType(&#x27;LineChart&#x27;)
+  .setSeriesNames([&#x27;ERA5-Land&#x27;, &#x27;TerraClimate&#x27;])
+  .setOptions({title: &#x27;Temperatura media mensual por fuente&#x27;,
+               hAxis: {title: &#x27;Mes&#x27;}, vAxis: {title: &#x27;°C&#x27;}, pointSize: 4}));
+
+print(ui.Chart.feature.byFeature(climatologia, &#x27;mes&#x27;, [&#x27;ET_modis&#x27;, &#x27;ET_era5&#x27;, &#x27;ET_tc&#x27;])
+  .setChartType(&#x27;LineChart&#x27;)
+  .setSeriesNames([&#x27;MODIS MOD16&#x27;, &#x27;ERA5-Land&#x27;, &#x27;TerraClimate (aet)&#x27;])
+  .setOptions({title: &#x27;Evapotranspiración real mensual por fuente&#x27;,
+               hAxis: {title: &#x27;Mes&#x27;}, vAxis: {title: &#x27;mm/mes&#x27;}, pointSize: 4}));
+
+print(ui.Chart.feature.byFeature(climatologia, &#x27;mes&#x27;, [&#x27;PET_modis&#x27;, &#x27;PET_era5&#x27;, &#x27;PET_tc&#x27;])
+  .setChartType(&#x27;LineChart&#x27;)
+  .setSeriesNames([&#x27;MODIS MOD16&#x27;, &#x27;ERA5-Land&#x27;, &#x27;TerraClimate (pet)&#x27;])
+  .setOptions({title: &#x27;Evapotranspiración potencial mensual por fuente&#x27;,
+               hAxis: {title: &#x27;Mes&#x27;}, vAxis: {title: &#x27;mm/mes&#x27;}, pointSize: 4}));
+
+// r = correlación de Pearson entre los 12 valores; luego, diferencia del total anual
+function comparar(etiqueta, a, b) {
+  var r  = climatologia.reduceColumns(ee.Reducer.pearsonsCorrelation(), [a, b]).get(&#x27;correlation&#x27;);
+  var sa = climatologia.aggregate_sum(a);
+  var sb = climatologia.aggregate_sum(b);
+  var res = {};
+  res[&#x27;r (correlación)&#x27;] = r;
+  res[&#x27;Total anual &#x27; + a] = sa;
+  res[&#x27;Total anual &#x27; + b] = sb;
+  res[&#x27;Diferencia (a - b), mm/año&#x27;] = ee.Number(sa).subtract(sb);
+  res[&#x27;Diferencia relativa, %&#x27;] = ee.Number(sa).subtract(sb).divide(sb).multiply(100);
+  print(etiqueta, res);
+}
+comparar(&#x27;P: CHIRPS vs TerraClimate&#x27;, &#x27;P_chirps&#x27;, &#x27;P_tc&#x27;);
+comparar(&#x27;P: ERA5-Land vs TerraClimate&#x27;, &#x27;P_era5&#x27;, &#x27;P_tc&#x27;);
+comparar(&#x27;ET: MODIS vs TerraClimate&#x27;, &#x27;ET_modis&#x27;, &#x27;ET_tc&#x27;);
+comparar(&#x27;PET: MODIS vs TerraClimate&#x27;, &#x27;PET_modis&#x27;, &#x27;PET_tc&#x27;);</code></pre></div>
+      <div class="ver"><strong>Qué deben ver al ejecutar</strong><ul><li><strong>Paso 2 · Comparar las fuentes en el espacio:</strong> Tres mapas azules. Alternen las capas: ERA5-Land se ve más «a bloques» que CHIRPS y TerraClimate. Observen dónde llueve más y si las tres fuentes coinciden en el patrón.</li><li><strong>Paso 3 · Climatología mensual por fuente:</strong> Una tabla de 12 elementos en la <em>Console</em>. Despliéguenla y revisen que los valores tengan sentido: P entre decenas y cientos de mm/mes, T de unos pocos a ~20 °C en zona andina, ET y PET de decenas de mm/mes.</li><li><strong>Paso 4 · Gráficos y métricas de verificación:</strong> Cuatro gráficos y cuatro diccionarios de métricas. Una correlación alta con diferencia anual grande significa que la fuente copia bien el ciclo pero sesga la cantidad. Una correlación baja es una señal de alerta mayor.</li></ul></div>
+      <div class="preg"><strong>Preguntas para el reporte</strong><ul><li><strong>Paso 2:</strong> ¿Qué fuente muestra más variación dentro de la cuenca? ¿Dónde discrepan más? Repitan el histograma con las otras dos fuentes: ¿cambia su forma?</li><li><strong>Paso 3:</strong> Escojan un mes y comparen P entre las tres fuentes. ¿Qué diferencia absoluta y relativa hay?</li><li><strong>Paso 4:</strong> ¿Qué fuente de precipitación elegirían para esta cuenca y por qué? ¿Para ET, MODIS, ERA5-Land o TerraClimate? Justifiquen con las métricas y con la resolución.</li></ul></div>
+      <ul class="checklist"><li><input type="checkbox"> Etapa 2 completada y ejecutada sin errores.</li></ul>
+    </div>
+    <div class="paso" id="etapa3">
+      <h3><span class="tag">ETAPA 3</span>Climograma</h3>
+      <p>Con las fuentes elegidas, se construye el climograma y se revisa la variabilidad año a año para definir los meses secos.</p>
+      <div class="code-label">Google Earth Engine · JavaScript · pasos 5, 6 · 2 espacios en blanco</div>
+      <div class="codebox"><a class="btn-copy" href="#" role="button">Copiar código</a><pre><code>// ===== PASO 5 · CLIMOGRAMA =====
+// Elija la fuente de P y de T que defendió en la verificación
+var BANDA_P = &#x27;P_chirps&#x27;;   // &#x27;P_chirps&#x27; | &#x27;P_era5&#x27; | &#x27;P_tc&#x27;
+var BANDA_T = &#x27;T_tc&#x27;;       // &#x27;T_era5&#x27;   | &#x27;T_tc&#x27;
+
+print(ui.Chart.feature.byFeature(climatologia, &#x27;mes&#x27;, [BANDA_P, BANDA_T])
+  // COMPLETAR: tipo de gráfico que combina barras y líneas
+  .setChartType(&#x27;____&#x27;)
+  .setSeriesNames([&#x27;Precipitación (mm)&#x27;, &#x27;Temperatura (°C)&#x27;])
+  .setOptions({
+    title: &#x27;Climograma de la cuenca (&#x27; + ANIO_INI + &#x27;-&#x27; + ANIO_FIN + &#x27;)&#x27;,
+    hAxis: {title: &#x27;Mes&#x27;},
+    vAxes: {0: {title: &#x27;Precipitación (mm/mes)&#x27;}, 1: {title: &#x27;Temperatura (°C)&#x27;}},
+    series: {
+      // COMPLETAR: tipo de serie de la precipitación (el de la temperatura es &#x27;line&#x27;)
+      0: {type: &#x27;____&#x27;, targetAxisIndex: 0, color: &#x27;#2b7bba&#x27;},
+      1: {type: &#x27;line&#x27;, targetAxisIndex: 1, color: &#x27;#d7301f&#x27;, pointSize: 4}
+    }
+  }));
+
+// ===== PASO 6 · PRECIPITACIÓN ANUAL (AÑO POR AÑO) =====
+var pAnual = ee.FeatureCollection(anios.map(function (y) {
+  var suma = tc.select(&#x27;P_tc&#x27;)
+    .filter(ee.Filter.calendarRange(y, y, &#x27;year&#x27;)).sum()
+    .reduceRegion({reducer: ee.Reducer.mean(), geometry: roiGeom,
+                   scale: ESCALA, bestEffort: true, maxPixels: 1e9}).get(&#x27;P_tc&#x27;);
+  return ee.Feature(null, {anio: y, P: suma});
+}));
+
+print(ui.Chart.feature.byFeature(pAnual, &#x27;anio&#x27;, &#x27;P&#x27;)
+  .setChartType(&#x27;ColumnChart&#x27;)
+  .setOptions({title: &#x27;Precipitación anual (TerraClimate)&#x27;,
+               hAxis: {title: &#x27;Año&#x27;}, vAxis: {title: &#x27;mm/año&#x27;}, legend: {position: &#x27;none&#x27;}}));
+
+// Con el climograma del paso 5, ajuste SECO_INI y SECO_FIN en el paso 0 y vuelva a ejecutar.</code></pre></div>
+      <div class="ver"><strong>Qué deben ver al ejecutar</strong><ul><li><strong>Paso 5 · Climograma:</strong> Barras azules (lluvia) y una línea roja (temperatura) con dos ejes verticales. Identifiquen a simple vista los meses más lluviosos, los más secos y si la temperatura cambia mucho durante el año.</li><li><strong>Paso 6 · Años húmedos y años secos:</strong> Una columna por año. Identifiquen el año más seco y el más húmedo del periodo.</li></ul></div>
+      <div class="preg"><strong>Preguntas para el reporte</strong><ul><li><strong>Paso 5:</strong> ¿El régimen de lluvias es unimodal o bimodal? ¿Cuáles son los meses más lluviosos y los más secos? ¿Cuánto varía la temperatura y qué implica en esta latitud?</li><li><strong>Paso 6:</strong> ¿Qué año fue el más seco y cuál el más húmedo? ¿Cuántas veces más llovió en uno que en el otro? Con el climograma, ¿qué meses escogen como secos (SECO_INI y SECO_FIN)?</li></ul></div>
+      <ul class="checklist"><li><input type="checkbox"> Etapa 3 completada y ejecutada sin errores.</li></ul>
+    </div>
+    <div class="paso" id="etapa4">
+      <h3><span class="tag">ETAPA 4</span>Estrés hídrico</h3>
+      <p>Se combinan precipitación, evapotranspiración real y potencial en tres indicadores y se mapea el CWSI píxel a píxel.</p>
+      <div class="code-label">Google Earth Engine · JavaScript · pasos 7, 8, 9 · 3 espacios en blanco</div>
+      <div class="codebox"><a class="btn-copy" href="#" role="button">Copiar código</a><pre><code>// ===== PASO 7 · ÍNDICES DE ESTRÉS HÍDRICO MENSUALES =====
+var estres = climatologia.map(function (f) {
+  var P   = ee.Number(f.get(BANDA_P));
+  var pet = ee.Number(f.get(&#x27;PET_tc&#x27;));
+  var et  = ee.Number(f.get(&#x27;ET_tc&#x27;));
+  return f.set({
+    &#x27;P_PET&#x27;:   P.divide(pet),                      // &lt; 1: la demanda supera a la lluvia
+    // COMPLETAR: CWSI = 1 - ET / PET (denominador)
+    &#x27;CWSI_tc&#x27;: ee.Number(1).subtract(et.divide(____)),
+    &#x27;CWSI_modis&#x27;: ee.Number(1).subtract(
+        ee.Number(f.get(&#x27;ET_modis&#x27;)).divide(ee.Number(f.get(&#x27;PET_modis&#x27;))))
+  });
+});
+
+print(ui.Chart.feature.byFeature(estres, &#x27;mes&#x27;, [&#x27;CWSI_modis&#x27;, &#x27;CWSI_tc&#x27;])
+  .setChartType(&#x27;LineChart&#x27;)
+  .setSeriesNames([&#x27;CWSI MODIS&#x27;, &#x27;CWSI TerraClimate&#x27;])
+  .setOptions({title: &#x27;CWSI mensual = 1 - ET/PET (0 sin estrés, 1 estrés máximo)&#x27;,
+               hAxis: {title: &#x27;Mes&#x27;}, vAxis: {title: &#x27;CWSI&#x27;, viewWindow: {min: 0, max: 1}},
+               pointSize: 4}));
+
+print(ui.Chart.feature.byFeature(estres, &#x27;mes&#x27;, [&#x27;P_PET&#x27;])
+  .setChartType(&#x27;ColumnChart&#x27;)
+  .setOptions({title: &#x27;Relación P/PET (menor a 1 = déficit)&#x27;,
+               hAxis: {title: &#x27;Mes&#x27;}, vAxis: {title: &#x27;P/PET&#x27;}, legend: {position: &#x27;none&#x27;}}));
+
+print(ui.Chart.feature.byFeature(climatologia, &#x27;mes&#x27;, [&#x27;DEF_tc&#x27;])
+  .setChartType(&#x27;ColumnChart&#x27;)
+  .setOptions({title: &#x27;Déficit hídrico climático TerraClimate (PET - AET)&#x27;,
+               hAxis: {title: &#x27;Mes&#x27;}, vAxis: {title: &#x27;mm/mes&#x27;}, legend: {position: &#x27;none&#x27;}}));
+
+// ===== PASO 8 · MAPA DE CWSI (MODIS) =====
+var cwsiCol = mod16.map(function (img) {
+  // COMPLETAR: la variable del numerador del índice (evapotranspiración real)
+  var cwsi = img.expression(&#x27;1 - (____ / PET)&#x27;,
+                            {ET: img.select(&#x27;ET&#x27;), PET: img.select(&#x27;PET&#x27;)})
+                .rename(&#x27;cwsi&#x27;);
+  return cwsi.copyProperties(img, [&#x27;system:time_start&#x27;]);
+});
+
+var cwsiAnual = cwsiCol.mean().clip(roiGeom);
+var cwsiSeco  = cwsiCol.filter(ee.Filter.calendarRange(SECO_INI, SECO_FIN, &#x27;month&#x27;))
+                       .mean().clip(roiGeom);
+
+var visCWSI = {min: 0, max: 1, palette: [&#x27;#1a9850&#x27;, &#x27;#fee08b&#x27;, &#x27;#d73027&#x27;]};
+Map.addLayer(cwsiAnual, visCWSI, &#x27;CWSI promedio anual (MODIS)&#x27;, 0);
+Map.addLayer(cwsiSeco,  visCWSI, &#x27;CWSI meses secos (MODIS)&#x27;);
+
+// ===== PASO 9 · COBERTURA, HISTOGRAMA Y SERIE MENSUAL =====
+if (CLASE_LC !== null) {
+  // COMPLETAR: reductor temporal que devuelve la clase más frecuente de cada píxel
+  var lc = ee.ImageCollection(&#x27;MODIS/061/MCD12Q1&#x27;).select(&#x27;LC_Type1&#x27;)
+             .filterDate(fIni, fFin.advance(1, &#x27;day&#x27;)).____();
+  var mascara = lc.eq(CLASE_LC);
+
+  Map.addLayer(cwsiSeco.updateMask(mascara), visCWSI,
+               &#x27;CWSI meses secos solo clase IGBP &#x27; + CLASE_LC);
+
+  // ¿Cuántos píxeles de 500 m tiene esa clase en la cuenca?
+  print(&#x27;Píxeles de la clase &#x27; + CLASE_LC + &#x27;:&#x27;, mascara.reduceRegion({
+    reducer: ee.Reducer.sum(), geometry: roiGeom, scale: 500,
+    maxPixels: 1e9, bestEffort: true}).get(&#x27;LC_Type1&#x27;));
+
+  print(ui.Chart.image.histogram(cwsiSeco.updateMask(mascara), roiGeom, 500)
+    .setOptions({title: &#x27;Histograma de CWSI (meses secos, clase IGBP &#x27; + CLASE_LC + &#x27;)&#x27;,
+                 hAxis: {title: &#x27;CWSI&#x27;}, vAxis: {title: &#x27;N.º de píxeles&#x27;}}));
+}
+
+// Serie mensual de CWSI sobre toda la cuenca (año por año)
+var cwsiMensual = ee.FeatureCollection(anios.map(function (y) {
+  return meses.map(function (m) {
+    var ini = ee.Date.fromYMD(y, m, 1);
+    var img = cwsiCol.filterDate(ini, ini.advance(1, &#x27;month&#x27;)).mean();
+    var v = img.reduceRegion({reducer: ee.Reducer.mean(), geometry: roiGeom,
+                              scale: 1000, bestEffort: true, maxPixels: 1e9}).get(&#x27;cwsi&#x27;);
+    return ee.Feature(null, {&#x27;system:time_start&#x27;: ini.millis(), cwsi: v});
+  });
+}).flatten());
+
+print(ui.Chart.feature.byFeature(cwsiMensual, &#x27;system:time_start&#x27;, &#x27;cwsi&#x27;)
+  .setChartType(&#x27;LineChart&#x27;)
+  .setOptions({title: &#x27;Serie mensual de CWSI (MODIS) &#x27; + ANIO_INI + &#x27;-&#x27; + ANIO_FIN,
+               hAxis: {title: &#x27;Fecha&#x27;}, vAxis: {title: &#x27;CWSI&#x27;}, legend: {position: &#x27;none&#x27;}}));</code></pre></div>
+      <div class="ver"><strong>Qué deben ver al ejecutar</strong><ul><li><strong>Paso 7 · Índices de estrés hídrico mensuales:</strong> Tres gráficos. Busquen los meses donde coinciden P/PET bajo, CWSI alto y déficit alto: esos son los meses de estrés. Comparen las dos curvas de CWSI.</li><li><strong>Paso 8 · Mapa de CWSI:</strong> Dos mapas de verde a rojo. Alternen el promedio anual con el de los meses secos: el rojo debería crecer en la época seca. Usen el <em>Inspector</em> en tres puntos de distinta altitud.</li><li><strong>Paso 9 · Cobertura, histograma y serie de CWSI:</strong> Un mapa enmascarado, el número de píxeles de la clase, un histograma y una serie de 276 puntos mensuales con picos en la época seca.</li></ul></div>
+      <div class="preg"><strong>Preguntas para el reporte</strong><ul><li><strong>Paso 7:</strong> ¿En qué meses coinciden P/PET &lt; 1, CWSI alto y déficit alto? ¿MODIS y TerraClimate coinciden en el patrón? ¿Y en la magnitud?</li><li><strong>Paso 8:</strong> ¿Dónde de la cuenca es más alto el CWSI en los meses secos? ¿Se relaciona con la altitud o con la cobertura?</li><li><strong>Paso 9:</strong> Si la clase tiene muy pocos píxeles, el histograma no es representativo: pruebe otra clase IGBP (por ejemplo 10 pastizales o 14 mosaico de cultivos y vegetación natural) y compare. ¿Qué años muestran los picos más altos y a qué los atribuyen?</li></ul></div>
+      <ul class="checklist"><li><input type="checkbox"> Etapa 4 completada y ejecutada sin errores.</li></ul>
+    </div>
+  </section>
+
+  <section id="cautelas">
+    <h2><span class="n">6</span>Cuidados al interpretar</h2>
+    <div class="card">
+      <ul class="objetivo-list">
+        <li><strong>Relieve y nubosidad:</strong> en los Andes ambos afectan la calidad de CHIRPS y de MODIS. Un píxel de 5 o 11 km promedia valles y cumbres a la vez.</li>
+        <li><strong>MODIS mensual aproximado:</strong> ET y PET de MOD16 vienen cada 8 días; el valor mensual se estima como promedio de los compuestos por los días del mes. No es una cifra exacta.</li>
+        <li><strong>Ninguna fuente es la verdad:</strong> la mejor verificación sería contrastar con una estación meteorológica local. Si disponen de datos de una estación cercana, úsenlos como reto.</li>
+        <li><strong>Pocos píxeles:</strong> al enmascarar por cobertura, una clase pequeña puede dejar solo unos cuantos píxeles de 500 m; el histograma no será representativo.</li>
+      </ul>
+    </div>
+    <div class="note"><strong>Valores de referencia (corrida con el punto [-79.00, -2.90] y el periodo 2001-2023):</strong> la precipitación anual de TerraClimate en la cuenca va de unos 690 mm (año más seco) a unos 1 470 mm (año más húmedo); el CWSI mensual de MODIS va de aproximadamente 0,2 a 0,5, con máximos en agosto y septiembre. Úsenlos solo para comprobar que sus resultados tienen el orden de magnitud correcto.</div>
+  </section>
+
+  <section id="entrega">
+    <h2><span class="n">7</span>Entrega</h2>
+    <div class="card">
+      <p>Cada estudiante documenta lo siguiente en el repositorio de la ayudantía y en su reporte (formato universal, máximo 5 páginas; marquen óptico/térmico según corresponda, y expliquen las fuentes meteorológicas en datos y métodos):</p>
+      <ul class="checklist">
+        <li><input type="checkbox"> Enlace al script completo en Google Earth Engine (compartido con permisos de lectura).</li>
+        <li><input type="checkbox"> Mapa de precipitación anual de las tres fuentes (paso 2) y el gráfico de comparación mensual (paso 4), con las métricas de correlación y diferencia.</li>
+        <li><input type="checkbox"> Climograma (paso 5), con la fuente elegida y la justificación de por qué esa fuente.</li>
+        <li><input type="checkbox"> Gráficos de P/PET, CWSI y déficit (paso 7) y el mapa de CWSI de los meses secos (paso 8).</li>
+        <li><input type="checkbox"> Respuestas a las preguntas de cada etapa, incluida la discusión de las limitaciones de las fuentes.</li>
+        <li><input type="checkbox"> <strong>Desafío:</strong> repetir el climograma y el CWSI en una cuenca costera y comparar con la sierra.</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  Sensores Remotos · Universidad de Cuenca — Práctica 3: Variables meteorológicas y estrés hídrico
+</footer>
+
+<script>
+document.querySelectorAll('a.btn-copy').forEach(function (b) {
+  b.addEventListener('click', function (e) {
+    e.preventDefault();
+    var t = b.parentNode.querySelector('pre').innerText;
+    var ok = function () { b.textContent = '¡Copiado!'; setTimeout(function () { b.textContent = 'Copiar código'; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).then(ok); }
+    else { var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (x) {} document.body.removeChild(ta); }
+  });
+});
+</script>
+</body>
+</html>
