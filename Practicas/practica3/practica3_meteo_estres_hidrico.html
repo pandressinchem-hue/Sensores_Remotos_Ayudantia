@@ -765,9 +765,9 @@ print(ui.Chart.feature.byFeature(cwsiMensual, &#x27;system:time_start&#x27;, &#x
 // Reúne todo en un solo visor: mapa centrado en la cuenca y, a la derecha, un panel con
 // la leyenda del CWSI, sus promedios y tres gráficos que se activan o desactivan.
 var IMPRIMIR_EN_CONSOLA = false;   // true = además de mostrarlos en el panel, imprime los gráficos en la Console
-// COMPLETAR: valor de ET/PET por encima del cual no hay déficit de agua (la evapotranspiración
-// real iguala a la demandada). Recuerde que CWSI = 1 - ET/PET.
-var UMBRAL_ET_PET = ____;
+// COMPLETAR: valor de P/PET por encima del cual no hay déficit (la lluvia iguala a la demanda
+// atmosférica de agua).
+var UMBRAL_P_PET = ____;
 
 // 10.1 Mapa limpio, centrado en la cuenca
 Map.layers().reset([]);
@@ -834,7 +834,7 @@ cwsiMensual.aggregate_mean(&#x27;cwsi&#x27;).evaluate(function (v) { lblSerie.se
 // 10.3 Interruptores y contenedores de los gráficos
 panelDer.add(ui.Label(&#x27;Gráficos (active o desactive):&#x27;, {fontWeight: &#x27;bold&#x27;, margin: &#x27;10px 0 2px 0&#x27;}));
 
-var panelHist  = ui.Panel([ui.Label(&#x27;Calculando histograma...&#x27;)]);
+var panelHist  = ui.Panel([ui.Label(&#x27;Calculando P/PET...&#x27;)]);
 var panelClimo = ui.Panel([ui.Label(&#x27;Calculando climograma...&#x27;)]);
 var panelSerie = ui.Panel([ui.Label(&#x27;Calculando serie temporal...&#x27;)]);
 
@@ -844,7 +844,7 @@ function interruptor(texto, panel) {
     panel.style().set(&#x27;____&#x27;, v);
   }});
 }
-panelDer.add(interruptor(&#x27;Histograma ET/PET con umbral&#x27;, panelHist));
+panelDer.add(interruptor(&#x27;Relación P/PET mensual (umbral)&#x27;, panelHist));
 panelDer.add(interruptor(&#x27;Climograma (selección de meses secos)&#x27;, panelClimo));
 panelDer.add(interruptor(&#x27;Serie temporal del CWSI&#x27;, panelSerie));
 panelDer.add(panelHist);
@@ -858,45 +858,40 @@ function publicar(panel, fabrica) {
   if (IMPRIMIR_EN_CONSOLA) { print(fabrica()); }
 }
 
-// 10.4 Histograma ET/PET (meses secos) con línea vertical en el umbral
-// ET/PET = 1 - CWSI. Se calcula el histograma en el servidor y se arma la tabla en el cliente.
-var relSeco = ee.Image(1).subtract(cwsiSeco).rename(&#x27;ET_PET&#x27;);
-var PASO_H = 0.05;   // ancho de cada intervalo
-var histo = relSeco.reduceRegion({
-  reducer: ee.Reducer.fixedHistogram(0, 1.5, 30), geometry: roiGeom, scale: 500,
-  maxPixels: 1e9, bestEffort: true}).get(&#x27;ET_PET&#x27;);
+var NOMBRES_MES = [&#x27;Ene&#x27;, &#x27;Feb&#x27;, &#x27;Mar&#x27;, &#x27;Abr&#x27;, &#x27;May&#x27;, &#x27;Jun&#x27;, &#x27;Jul&#x27;, &#x27;Ago&#x27;, &#x27;Sep&#x27;, &#x27;Oct&#x27;, &#x27;Nov&#x27;, &#x27;Dic&#x27;];
 
-ee.List(histo).evaluate(function (h) {
-  var maxN = 0;
-  var filas = h.map(function (p) {
-    maxN = Math.max(maxN, p[1]);
-    return {c: [{v: p[0] + PASO_H / 2}, {v: p[1]}, {v: null}]};
+// 10.4 Relación P/PET mensual (menor a 1 = déficit) con línea en el umbral
+// Se usa la tabla &quot;estres&quot; del paso 7; la línea punteada marca P/PET = UMBRAL_P_PET.
+estres.evaluate(function (fc) {
+  var filas = fc.features.map(function (f) {
+    var mes = f.properties.mes;
+    var r = f.properties.P_PET;
+    return {c: [{v: NOMBRES_MES[mes - 1]},
+                {v: r},
+                {v: r &lt; UMBRAL_P_PET ? &#x27;color: #d7301f&#x27; : &#x27;color: #2b7bba&#x27;},
+                {v: UMBRAL_P_PET}]};
   });
-  // Dos puntos en x = umbral dibujan la línea vertical
-  filas.push({c: [{v: UMBRAL_ET_PET}, {v: null}, {v: 0}]});
-  filas.push({c: [{v: UMBRAL_ET_PET}, {v: null}, {v: maxN * 1.05}]});
-
   var tabla = {
-    cols: [{id: &#x27;x&#x27;, label: &#x27;ET/PET&#x27;, type: &#x27;number&#x27;},
-           {id: &#x27;n&#x27;, label: &#x27;N.º de píxeles&#x27;, type: &#x27;number&#x27;},
-           {id: &#x27;u&#x27;, label: &#x27;Umbral ET/PET = &#x27; + UMBRAL_ET_PET, type: &#x27;number&#x27;}],
+    cols: [{id: &#x27;mes&#x27;, label: &#x27;Mes&#x27;, type: &#x27;string&#x27;},
+           {id: &#x27;r&#x27;, label: &#x27;P/PET&#x27;, type: &#x27;number&#x27;},
+           {id: &#x27;estilo&#x27;, type: &#x27;string&#x27;, role: &#x27;style&#x27;},
+           {id: &#x27;u&#x27;, label: &#x27;Umbral P/PET = &#x27; + UMBRAL_P_PET, type: &#x27;number&#x27;}],
     rows: filas};
 
   publicar(panelHist, function () {
-    var g = ui.Chart(tabla).setChartType(&#x27;ScatterChart&#x27;).setOptions({
-      title: &#x27;ET/PET en los meses secos (&#x27; + SECO_INI + &#x27;-&#x27; + SECO_FIN + &#x27;)&#x27;,
-      hAxis: {title: &#x27;ET/PET   (izquierda del umbral: déficit de agua)&#x27;, viewWindow: {min: 0, max: 1.5}},
-      vAxis: {title: &#x27;N.º de píxeles (500 m)&#x27;, viewWindow: {min: 0}},
-      legend: {position: &#x27;bottom&#x27;},
-      series: {0: {color: &#x27;#2b7bba&#x27;, lineWidth: 2, pointSize: 3},
-               1: {color: &#x27;#d7301f&#x27;, lineWidth: 3, pointSize: 0, lineDashStyle: [6, 4]}}});
+    var g = ui.Chart(tabla).setChartType(&#x27;ComboChart&#x27;).setOptions({
+      title: &#x27;Relación P/PET (menor a 1 = déficit) · rojo = déficit, azul = exceso&#x27;,
+      hAxis: {title: &#x27;Mes&#x27;}, vAxis: {title: &#x27;P/PET&#x27;, viewWindow: {min: 0}},
+      seriesType: &#x27;bars&#x27;,
+      series: {0: {type: &#x27;bars&#x27;, color: &#x27;#2b7bba&#x27;},
+               1: {type: &#x27;line&#x27;, color: &#x27;#333333&#x27;, lineWidth: 3, pointSize: 0, lineDashStyle: [6, 4]}},
+      legend: {position: &#x27;bottom&#x27;}});
     g.style().set({height: &#x27;230px&#x27;, stretch: &#x27;horizontal&#x27;});
     return g;
   });
 });
 
 // 10.5 Climograma con los meses secos resaltados
-var NOMBRES_MES = [&#x27;Ene&#x27;, &#x27;Feb&#x27;, &#x27;Mar&#x27;, &#x27;Abr&#x27;, &#x27;May&#x27;, &#x27;Jun&#x27;, &#x27;Jul&#x27;, &#x27;Ago&#x27;, &#x27;Sep&#x27;, &#x27;Oct&#x27;, &#x27;Nov&#x27;, &#x27;Dic&#x27;];
 climatologia.evaluate(function (fc) {
   var filas = fc.features.map(function (f) {
     var mes = f.properties.mes;
@@ -941,8 +936,8 @@ publicar(panelSerie, function () {
   g.style().set({height: &#x27;230px&#x27;, stretch: &#x27;horizontal&#x27;});
   return g;
 });</code></pre></div>
-      <div class="ver"><strong>Qué deben ver al ejecutar</strong><ul><li><strong>Mapa:</strong> el mapa de terreno se recentra en la cuenca con el CWSI de los meses secos, un título arriba y los contornos de la cuenca. El resto de capas (promedio anual, máscara por cobertura) están en <em>Layers</em>, apagadas.</li><li><strong>Panel derecho:</strong> barra de colores de verde a rojo con 0 y 1 en los extremos, tres promedios (anual, meses secos y serie completa) y tres casillas. Al desmarcar una casilla desaparece su gráfico.</li><li><strong>Histograma ET/PET:</strong> la distribución de los píxeles con una línea roja discontinua en el umbral. Lo que queda a la izquierda tiene déficit de agua.</li><li><strong>Climograma:</strong> barras de precipitación con los meses secos en naranja y la temperatura como línea.</li><li><strong>Serie temporal:</strong> el CWSI mensual de toda la cuenca con una línea de tendencia.</li></ul></div>
-      <div class="preg"><strong>Preguntas para el reporte</strong><ul><li><strong>Umbral:</strong> ¿por qué el umbral está en ET/PET = 1? Relaciónenlo con el CWSI = 1 - ET/PET: ¿qué valor del CWSI corresponde a ese umbral y qué significa físicamente que ET sea igual a PET? ¿Qué parte de los píxeles queda a la izquierda de la línea?</li><li><strong>Selección de meses:</strong> ¿los meses naranjas del climograma son realmente los más secos? Si no lo son, cambien <span class="inline-code">SECO_INI</span> y <span class="inline-code">SECO_FIN</span> en el paso 0, ejecuten todo de nuevo y comparen el histograma y los promedios.</li><li><strong>Promedios:</strong> ¿por qué el promedio de los meses secos es más alto que el anual? ¿El promedio de la serie completa coincide con el anual? ¿Qué diferencia hay entre ambos?</li><li><strong>Tendencia:</strong> ¿la línea de tendencia sube o baja? ¿Es una evidencia suficiente de cambio con solo 23 años y una resolución de 500 m?</li></ul></div>
+      <div class="ver"><strong>Qué deben ver al ejecutar</strong><ul><li><strong>Mapa:</strong> el mapa de terreno se recentra en la cuenca con el CWSI de los meses secos, un título arriba y los contornos de la cuenca. El resto de capas (promedio anual, máscara por cobertura) están en <em>Layers</em>, apagadas.</li><li><strong>Panel derecho:</strong> barra de colores de verde a rojo con 0 y 1 en los extremos, tres promedios (anual, meses secos y serie completa) y tres casillas. Al desmarcar una casilla desaparece su gráfico.</li><li><strong>Relación P/PET:</strong> una barra por mes (roja si hay déficit, azul si no) y una línea punteada en P/PET = 1.</li><li><strong>Climograma:</strong> barras de precipitación con los meses secos en naranja y la temperatura como línea.</li><li><strong>Serie temporal:</strong> el CWSI mensual de toda la cuenca con una línea de tendencia.</li></ul></div>
+      <div class="preg"><strong>Preguntas para el reporte</strong><ul><li><strong>Umbral:</strong> ¿por qué el umbral está en P/PET = 1? ¿Qué significa físicamente que la lluvia sea menor que la evapotranspiración potencial? ¿Cuántos meses quedan bajo la línea y coinciden con los meses secos del CWSI?</li><li><strong>Selección de meses:</strong> ¿los meses naranjas del climograma son realmente los más secos? Si no lo son, cambien <span class="inline-code">SECO_INI</span> y <span class="inline-code">SECO_FIN</span> en el paso 0, ejecuten todo de nuevo y comparen el histograma y los promedios.</li><li><strong>Promedios:</strong> ¿por qué el promedio de los meses secos es más alto que el anual? ¿El promedio de la serie completa coincide con el anual? ¿Qué diferencia hay entre ambos?</li><li><strong>Tendencia:</strong> ¿la línea de tendencia sube o baja? ¿Es una evidencia suficiente de cambio con solo 23 años y una resolución de 500 m?</li></ul></div>
       <div class="note"><strong>Para la presentación:</strong> si la pantalla es pequeña, desmarquen los gráficos que no necesiten mostrar. Cambien <span class="inline-code">IMPRIMIR_EN_CONSOLA</span> a <span class="inline-code">true</span> si además quieren copiar los gráficos a la <em>Console</em>.</div>
       <ul class="checklist"><li><input type="checkbox"> Etapa 5 completada y ejecutada sin errores.</li></ul>
     </div>
@@ -970,7 +965,7 @@ publicar(panelSerie, function () {
         <li><input type="checkbox"> Mapa de precipitación anual de las tres fuentes (paso 2) y el gráfico de comparación mensual (paso 4), con las métricas de correlación y diferencia.</li>
         <li><input type="checkbox"> Climograma (paso 5), con la fuente elegida y la justificación de por qué esa fuente.</li>
         <li><input type="checkbox"> Gráficos de P/PET, CWSI y déficit (paso 7) y el mapa de CWSI de los meses secos (paso 8).</li>
-        <li><input type="checkbox"> Captura del visor final (paso 10): mapa, leyenda, histograma ET/PET con el umbral, climograma y serie temporal, con la explicación del umbral y de la selección de meses.</li>
+        <li><input type="checkbox"> Captura del visor final (paso 10): mapa, leyenda, gráfico de P/PET con el umbral, climograma y serie temporal, con la explicación del umbral y de la selección de meses.</li>
         <li><input type="checkbox"> Respuestas a las preguntas de cada etapa, incluida la discusión de las limitaciones de las fuentes.</li>
         <li><input type="checkbox"> <strong>Desafío:</strong> repetir el climograma y el CWSI en una cuenca costera y comparar con la sierra.</li>
       </ul>
